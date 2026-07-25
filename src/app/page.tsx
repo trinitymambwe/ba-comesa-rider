@@ -124,7 +124,7 @@ function Dashboard({ riderData, userId }: { riderData: any; userId: string }) {
           <span className="text-xl font-black"><span className="text-orange-500">●</span> <span className="text-white">ba</span><span className="text-orange-500">Comesa</span></span>
           <span className="bg-orange-500 text-white text-xs px-3 py-1 rounded-full font-bold">RIDER</span>
         </div>
-        <button onClick={() => auth.signOut()} className="text-gray-400 hover:text-white text-sm">Logout</button>
+       <button onClick={async () => { await auth.signOut(); window.location.reload() }} className="text-gray-400 hover:text-white text-sm">Logout</button>
       </header>
 
       {/* Rider Info Bar */}
