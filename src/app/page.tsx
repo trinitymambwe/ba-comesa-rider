@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react'
 import { auth, db } from '@/lib/firebase'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
 import { doc, setDoc, getDoc, collection, getDocs, query, where, orderBy, updateDoc } from 'firebase/firestore'
-import { Bike, Package, DollarSign, LogOut, MapPin, Navigation } from 'lucide-react'
+import {
+  Bike, Car, Package, DollarSign, LogOut, MapPin, Navigation,
+  CheckCircle, Clock, AlertTriangle
+} from 'lucide-react'
 
 export default function RiderHome() {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
@@ -28,7 +31,7 @@ export default function RiderHome() {
       await setDoc(doc(db, 'riders', result.user.uid), {
         name, email, phone, vehicle, area,
         status: 'inactive', earnings: 0, deliveries: 0,
-        lat: null, lng: null,
+        lat: null, lng: null, lastSeen: null,
         createdAt: new Date().toISOString(),
       })
       setRiderData({ name, phone, vehicle, area, status: 'inactive', earnings: 0, deliveries: 0, id: result.user.uid })
@@ -69,7 +72,9 @@ export default function RiderHome() {
           <h1 style={{ color: 'white', fontSize: '22px', fontWeight: 700 }}>baComesa Rider</h1>
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>Deliver with us</p>
         </div>
-        {error && <div style={{ backgroundColor: 'rgba(255,59,48,0.15)', border: '1px solid rgba(255,59,48,0.3)', color: '#ff6b6b', padding: '10px 14px', borderRadius: '12px', marginBottom: '16px', fontSize: '13px' }}>{error}</div>}
+        {error && <div style={{ backgroundColor: 'rgba(255,59,48,0.15)', border: '1px solid rgba(255,59,48,0.3)', color: '#ff6b6b', padding: '10px 14px', borderRadius: '12px', marginBottom: '16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <AlertTriangle size={14} /> {error}
+        </div>}
         <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '12px', padding: '4px' }}>
           <button onClick={() => setMode('login')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '14px', backgroundColor: mode === 'login' ? 'rgba(255,255,255,0.2)' : 'transparent', color: mode === 'login' ? 'white' : 'rgba(255,255,255,0.5)' }}>Login</button>
           <button onClick={() => setMode('signup')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '14px', backgroundColor: mode === 'signup' ? 'rgba(255,255,255,0.2)' : 'transparent', color: mode === 'signup' ? 'white' : 'rgba(255,255,255,0.5)' }}>Sign Up</button>
@@ -80,16 +85,18 @@ export default function RiderHome() {
               <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name" required style={{ padding: '13px 14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.12)', outline: 'none', fontSize: '14px', backgroundColor: 'rgba(255,255,255,0.05)', color: 'white', width: '100%', boxSizing: 'border-box' }} />
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone Number" required style={{ padding: '13px 14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.12)', outline: 'none', fontSize: '14px', backgroundColor: 'rgba(255,255,255,0.05)', color: 'white', width: '100%', boxSizing: 'border-box' }} />
               <select value={vehicle} onChange={(e) => setVehicle(e.target.value)} style={{ padding: '13px 14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.12)', outline: 'none', fontSize: '14px', backgroundColor: 'rgba(255,255,255,0.05)', color: 'white', width: '100%' }}>
-                <option value="bicycle">🚲 Bicycle</option>
-                <option value="motorbike">🏍️ Motorbike</option>
-                <option value="car">🚗 Car</option>
+                <option value="bicycle">Bicycle</option>
+                <option value="motorbike">Motorbike</option>
+                <option value="car">Car</option>
               </select>
               <input type="text" value={area} onChange={(e) => setArea(e.target.value)} placeholder="Delivery Area (e.g., Lusaka CBD)" required style={{ padding: '13px 14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.12)', outline: 'none', fontSize: '14px', backgroundColor: 'rgba(255,255,255,0.05)', color: 'white', width: '100%', boxSizing: 'border-box' }} />
             </>
           )}
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required style={{ padding: '13px 14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.12)', outline: 'none', fontSize: '14px', backgroundColor: 'rgba(255,255,255,0.05)', color: 'white', width: '100%', boxSizing: 'border-box' }} />
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required minLength={6} style={{ padding: '13px 14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.12)', outline: 'none', fontSize: '14px', backgroundColor: 'rgba(255,255,255,0.05)', color: 'white', width: '100%', boxSizing: 'border-box' }} />
-          <button type="submit" disabled={loading} style={{ marginTop: '8px', padding: '14px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '15px', background: 'linear-gradient(135deg, #4da3ff, #1a73e8)', color: 'white', opacity: loading ? 0.6 : 1 }}>{loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}</button>
+          <button type="submit" disabled={loading} style={{ marginTop: '8px', padding: '14px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '15px', background: 'linear-gradient(135deg, #4da3ff, #1a73e8)', color: 'white', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            {loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+          </button>
         </form>
       </div>
     </div>
@@ -101,7 +108,6 @@ function Dashboard({ riderData }: { riderData: any }) {
   const [activeTab, setActiveTab] = useState<'available' | 'my'>('my')
   const [gpsStatus, setGpsStatus] = useState('Requesting GPS...')
 
-  // GPS TRACKING - THIS IS THE KEY PART
   useEffect(() => {
     if (!navigator.geolocation) {
       setGpsStatus('GPS not available')
@@ -113,11 +119,12 @@ function Dashboard({ riderData }: { riderData: any }) {
     const watchId = navigator.geolocation.watchPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords
-        setGpsStatus(`📍 ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
+        setGpsStatus(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
         try {
           await updateDoc(doc(db, 'riders', riderData.id), {
             lat: latitude,
             lng: longitude,
+            lastSeen: new Date().toISOString(),
           })
         } catch (e) {
           console.log('GPS update failed')
@@ -206,12 +213,28 @@ function Dashboard({ riderData }: { riderData: any }) {
                 <div key={d.id} style={{ padding: '20px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.05)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <p style={{ fontWeight: 700 }}>{d.productName}</p>
-                    <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '20px', backgroundColor: d.deliveryStatus === 'delivered' ? 'rgba(34,197,94,0.2)' : 'rgba(59,130,246,0.2)', color: d.deliveryStatus === 'delivered' ? '#4ade80' : '#60a5fa' }}>{d.deliveryStatus}</span>
+                    <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '20px', backgroundColor: d.deliveryStatus === 'delivered' ? 'rgba(34,197,94,0.2)' : d.deliveryStatus === 'picked_up' ? 'rgba(234,179,8,0.2)' : 'rgba(59,130,246,0.2)', color: d.deliveryStatus === 'delivered' ? '#4ade80' : d.deliveryStatus === 'picked_up' ? '#facc15' : '#60a5fa', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {d.deliveryStatus === 'delivered' && <CheckCircle size={12} />}
+                      {d.deliveryStatus === 'picked_up' && <Clock size={12} />}
+                      {d.deliveryStatus}
+                    </span>
                   </div>
-                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>📍 {d.deliveryAddress}</p>
-                  {d.deliveryStatus === 'assigned' && <button onClick={() => updateStatus(d.id, 'picked_up')} style={{ marginTop: '12px', width: '100%', padding: '12px', borderRadius: '12px', border: 'none', backgroundColor: '#facc15', color: '#000', fontWeight: 700, cursor: 'pointer' }}>📦 Mark as Picked Up</button>}
-                  {d.deliveryStatus === 'picked_up' && <button onClick={() => updateStatus(d.id, 'delivered')} style={{ marginTop: '12px', width: '100%', padding: '12px', borderRadius: '12px', border: 'none', backgroundColor: '#22c55e', color: 'white', fontWeight: 700, cursor: 'pointer' }}>✅ Mark as Delivered</button>}
-                  {d.deliveryStatus === 'delivered' && <p style={{ marginTop: '12px', textAlign: 'center', color: '#4ade80', fontWeight: 700 }}>✅ Delivered · +K30 earned</p>}
+                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={12} /> {d.deliveryAddress}</p>
+                  {d.deliveryStatus === 'assigned' && (
+                    <button onClick={() => updateStatus(d.id, 'picked_up')} style={{ marginTop: '12px', width: '100%', padding: '12px', borderRadius: '12px', border: 'none', backgroundColor: '#facc15', color: '#000', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                      <Package size={14} /> Mark as Picked Up
+                    </button>
+                  )}
+                  {d.deliveryStatus === 'picked_up' && (
+                    <button onClick={() => updateStatus(d.id, 'delivered')} style={{ marginTop: '12px', width: '100%', padding: '12px', borderRadius: '12px', border: 'none', backgroundColor: '#22c55e', color: 'white', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                      <CheckCircle size={14} /> Mark as Delivered
+                    </button>
+                  )}
+                  {d.deliveryStatus === 'delivered' && (
+                    <p style={{ marginTop: '12px', textAlign: 'center', color: '#4ade80', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                      <CheckCircle size={14} /> Delivered · +K30 earned
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -219,10 +242,18 @@ function Dashboard({ riderData }: { riderData: any }) {
         )}
         {activeTab === 'available' && (
           <div style={{ borderRadius: '20px', backgroundColor: 'rgba(255,255,255,0.03)', padding: '24px' }}>
-            <p style={{ fontWeight: 700, fontSize: '17px', marginBottom: '16px' }}>Earnings Summary</p>
+            <p style={{ fontWeight: 700, fontSize: '17px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <DollarSign size={18} /> Earnings Summary
+            </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div style={{ padding: '20px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.05)' }}><p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Total Earned</p><p style={{ color: '#4da3ff', fontWeight: 700, fontSize: '24px' }}>K{Number(riderData.earnings || 0).toLocaleString()}</p></div>
-              <div style={{ padding: '20px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.05)' }}><p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Deliveries</p><p style={{ fontWeight: 700, fontSize: '24px' }}>{riderData.deliveries || 0}</p></div>
+              <div style={{ padding: '20px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Total Earned</p>
+                <p style={{ color: '#4da3ff', fontWeight: 700, fontSize: '24px' }}>K{Number(riderData.earnings || 0).toLocaleString()}</p>
+              </div>
+              <div style={{ padding: '20px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Deliveries</p>
+                <p style={{ fontWeight: 700, fontSize: '24px' }}>{riderData.deliveries || 0}</p>
+              </div>
             </div>
           </div>
         )}
